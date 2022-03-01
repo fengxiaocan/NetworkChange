@@ -6,14 +6,11 @@ import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 
 public final class NetworkUtil {
-    static class Holder{
-        static NetworkUtil INSTANCE = new NetworkUtil();
-    }
+
+    private NetworkCallbackImpl networkCallback;
 
     private NetworkUtil() {
     }
-
-    private NetworkCallbackImpl networkCallback;
 
     public static ConnectivityManager getConnectivityManager(Context context) {
         return (ConnectivityManager) context.getApplicationContext().getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -95,7 +92,6 @@ public final class NetworkUtil {
         return false;
     }
 
-
     /**
      * 检测网络是否是WiFi并且活跃状态
      *
@@ -113,6 +109,7 @@ public final class NetworkUtil {
         }
         return false;
     }
+
     /**
      * 检测网络是否是移动网络
      *
@@ -126,7 +123,6 @@ public final class NetworkUtil {
         }
         return false;
     }
-
 
     /**
      * 检测网络是否是移动网络并且活跃状态
@@ -148,22 +144,23 @@ public final class NetworkUtil {
 
     /**
      * 监听网络状态变化
+     *
      * @param context
      * @return
      */
-    public static void registerNetworkCallback(Context context, OnNetworkChangeCallback networkChangeCallback) {
-        unregisterNetworkCallback(context);
-
-        NetworkCallbackImpl networkCallback = new NetworkCallbackImpl(networkChangeCallback);
-        if (registerNetworkCallback(context,networkCallback)) {
-            Holder.INSTANCE.networkCallback = networkCallback;
+    public static void registerNetworkCallback(Context context, OnNetworkCallback networkChangeCallback) {
+        if (networkChangeCallback != null) {
+            unregisterNetworkCallback(context);
+            NetworkCallbackImpl networkCallback = new NetworkCallbackImpl(context, networkChangeCallback);
+            if (registerNetworkCallback(context, networkCallback)) {
+                Holder.INSTANCE.networkCallback = networkCallback;
+            }
         }
     }
 
-
-
     /**
      * 注销监听网络状态变化
+     *
      * @param context
      * @return
      */
@@ -177,32 +174,37 @@ public final class NetworkUtil {
 
     /**
      * 监听网络状态变化
+     *
      * @param context
      * @return
      */
     public static boolean registerNetworkCallback(Context context, ConnectivityManager.NetworkCallback callback) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivityManager != null) {
+        ConnectivityManager manager = getConnectivityManager(context);
+        if (manager != null) {
             NetworkRequest build = new NetworkRequest.Builder().build();
-            connectivityManager.registerNetworkCallback(build, callback);
+            manager.registerNetworkCallback(build, callback);
             return true;
         }
         return false;
     }
 
-
     /**
      * 注销监听网络状态变化
+     *
      * @param context
      * @return
      */
     public static boolean unregisterNetworkCallback(Context context, ConnectivityManager.NetworkCallback callback) {
-        ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-        if (connectivityManager != null) {
-            connectivityManager.unregisterNetworkCallback(callback);
+        ConnectivityManager manager = getConnectivityManager(context);
+        if (manager != null) {
+            manager.unregisterNetworkCallback(callback);
             return true;
         }
         return false;
+    }
+
+    static class Holder {
+        static NetworkUtil INSTANCE = new NetworkUtil();
     }
 
 
